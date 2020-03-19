@@ -1,0 +1,22 @@
+{
+    "name": "dynamonet/redis",
+    "description": "Redis extension wrapper, with nice Lua-scripting support, and other helpful utilities",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Eduardo Rodriguez",
+            "email": "eduardo@dynamonet.com.ar"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php" : "^7.1",
+        "ext-redis": "^5.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Dynamo\\Redis\\": "src/"
+        }
+    }
+}
