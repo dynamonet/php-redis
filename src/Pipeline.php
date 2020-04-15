@@ -8,7 +8,7 @@ use Redis;
  * Dynamo's Redis client (a wrapper for the phpredis client).
  * We created this wrapper in replacement of the predis library after profiling it.
  */
-class Pipeline
+class Pipeline implements \Countable
 {
     protected $client;
     protected $scriptCalls;
@@ -58,6 +58,14 @@ class Pipeline
     public function getCommands()
     {
         return $this->pipeline;
+    }
+
+    /**
+     * @return integer The total ammount of enqueued commands
+     */
+    public function count() : int
+    {
+        return count($this->pipeline);
     }
 
     public function hasQueuedCommands() : bool
