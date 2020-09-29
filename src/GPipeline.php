@@ -128,7 +128,7 @@ class GPipeline extends Pipeline
         return $this;
     }
 
-    protected function flush()
+    public function flush()
     {
         parent::flush();
         $this->rPushMap = null;

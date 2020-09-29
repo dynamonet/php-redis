@@ -3,13 +3,14 @@
 namespace Dynamo\Redis\Exceptions;
 
 use Exception;
+use Dynamo\Redis\Pipeline;
 
 class PipelineException extends Exception {
 
     protected $pipeline;
     protected $reply;
 
-    public function __construct(string $msg, array $pipeline, $reply = null)
+    public function __construct(string $msg, Pipeline $pipeline, $reply = null)
     {
         parent::__construct($msg);
         $this->pipeline = $pipeline;
@@ -19,9 +20,9 @@ class PipelineException extends Exception {
     /**
      * Gets the commands queue, as an array of commands and its parameters
      *
-     * @return array
+     * @return Pipeline
      */
-    public function getPipeline() : array
+    public function getPipeline() : Pipeline
     {
         return $this->pipeline;
     }
