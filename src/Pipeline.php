@@ -2,6 +2,7 @@
 
 namespace Dynamo\Redis;
 
+use Dynamo\Redis\Exceptions\PipelineException;
 use Redis;
 
 /**
@@ -75,10 +76,20 @@ class Pipeline implements \Countable
 
     public function exec()
     {
-        $result = $this->client->exec($this);
+        $reply = $this->client->exec($this);
+        if(count($reply) != count($this->pipeline)){
+            $pipeline = $this->pipeline;
+            $this->flush();
+            throw new PipelineException("Unexpected reply length", $pipeline, $reply);
+        }
+        $this->flush();
+
+        return $reply;
+    }
+
+    protected function flush()
+    {
         $this->pipeline = [];
         $this->scriptCalls = [];
-
-        return $result;
     }
 }

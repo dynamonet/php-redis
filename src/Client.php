@@ -76,13 +76,23 @@ class Client
         );
     }
 
-    public function pipeline(callable $callable)
+    /**
+     * Creates a pipeline to pipe/enqueue commands to be sent to Redis server
+     * in a single round-trip
+     *
+     * @param callable|null $callable
+     * @return Pipeline|array
+     */
+    public function pipeline(?callable $callable = null)
     {
         $result = null;
         $pipeline = new Pipeline($this);
-        $callable($pipeline);
+        if($callable){
+            $callable($pipeline);
+            return $this->exec($pipeline);
+        }
 
-        return $this->exec($pipeline);
+        return $pipeline;
     }
 
     public function exec(Pipeline $pipeline)

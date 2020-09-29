@@ -18,5 +18,8 @@
         "psr-4": {
             "Dynamo\\Redis\\": "src/"
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7"
     }
 }
