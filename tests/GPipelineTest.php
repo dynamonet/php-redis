@@ -55,6 +55,23 @@ final class GPipelineTest extends TestCase
         var_dump($reply);
     }
 
+    public function testToArray(): void
+    {
+        $pipe = new GPipeline($this->getClient());
+        $pipe->del('mylist')
+            ->del('myhash')
+            ->rPush('mylist', 'sarasa')
+            ->hIncrBy('myhash', 'counter', 1)
+            ->rPush('mylist', 'milanga')
+            ->hIncrBy('myhash', 'counter', 2)
+            ->rPush('mylist', 'porotos')
+            ->hIncrBy('myhash', 'counter', 3);
+
+        $arr = $pipe->toArray();
+        echo(json_encode($arr));
+        $this->assertIsArray($arr);
+    }
+
     public function testXAckGrouping(): void
     {
         $pipe = new GPipeline();

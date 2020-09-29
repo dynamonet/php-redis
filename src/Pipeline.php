@@ -61,6 +61,16 @@ class Pipeline implements \Countable
         return $this->pipeline;
     }
 
+    public function toArray() : array
+    {
+        return array_map(function($cmd){
+            return array_merge(
+                [ $cmd->name ],
+                ( is_array($cmd->args) ? $cmd->args : [ $cmd->args ] )
+            );
+        }, $this->pipeline);
+    }
+
     /**
      * @return integer The total ammount of enqueued commands
      */
