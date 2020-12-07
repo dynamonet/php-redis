@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Dynamo\Redis\Client;
+use Dynamo\Redis\Exceptions\PipelineException;
 use PHPUnit\Framework\TestCase;
 use Dynamo\Redis\GPipeline;
 
@@ -14,13 +15,14 @@ final class GPipelineTest extends TestCase
             $redis = new \Redis();
             $redis->connect(
                 getenv('REDIS_HOST') ?: 'host.docker.internal',
-                (int) (getenv('REDIS_PORT') ?: '6379')
+                (int) (getenv('REDIS_PORT') ?: '26379')
             );
             $this->client = new Client($redis);
         }
 
         return $this->client;
     }
+
     public function testRpush(): void
     {
         $pipe = new GPipeline($this->getClient());
@@ -28,9 +30,21 @@ final class GPipelineTest extends TestCase
         $pipe->rPush('mylist', 'milanga');
         $pipe->rPush('mylist', 'porotos');
         $commands = $pipe->getCommands();
-        var_dump($commands);
+        //var_dump($commands);
         $this->assertCount(1, $commands);
-        $reply = $pipe->exec();
+
+        try{
+            $reply = $pipe->exec();
+        } catch(PipelineException $perr){
+            echo $perr->getMessage()." larararar \n";
+            var_export([
+                'command-queue' => $perr->getCommandQueue(),
+                'reply' => $perr->getReply(),
+            ]);
+            
+            exit;
+        }
+        
         $this->assertIsArray($reply);
         var_dump($reply);
     }

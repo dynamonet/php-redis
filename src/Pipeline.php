@@ -88,8 +88,14 @@ class Pipeline implements \Countable
     {
         $reply = $this->client->exec($this);
         if(count($reply) != count($this->pipeline)){
+            $exc = new PipelineException(
+                "Unexpected reply length",
+                $this->pipeline,
+                $reply
+            );
             $this->flush();
-            throw new PipelineException("Unexpected reply length", $this, $reply);
+
+            throw $exc;
         }
         $this->flush();
 

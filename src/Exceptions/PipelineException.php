@@ -7,26 +7,42 @@ use Dynamo\Redis\Pipeline;
 
 class PipelineException extends Exception {
 
-    protected $pipeline;
+    protected $commandQueue;
     protected $reply;
 
-    public function __construct(string $msg, Pipeline $pipeline, $reply = null)
+    public function __construct(
+        string $msg,
+        $commandQueue,
+        $reply = null
+    )
     {
         parent::__construct($msg);
-        $this->pipeline = $pipeline;
+
+        $this->commandQueue = array_map(function($cmd){
+            return array_merge(
+                [ $cmd->name ],
+                $cmd->args
+            );
+        }, $commandQueue);
+
         $this->reply = $reply;
     }
 
     /**
      * Gets the commands queue, as an array of commands and its parameters
      *
-     * @return Pipeline
+     * @return array
      */
-    public function getPipeline() : Pipeline
+    public function getCommandQueue()
     {
-        return $this->pipeline;
+        return $this->commandQueue;
     }
 
+    /**
+     * Gets the reply to the pipeline exec command, if any
+     *
+     * @return array|null
+     */
     public function getReply()
     {
         return $this->reply;
