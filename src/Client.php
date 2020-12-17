@@ -10,12 +10,29 @@ use Redis;
  */
 class Client
 {
+    protected $config;
     protected $client;
     protected $scripts;
 
-    public function __construct(Redis $client)
+    /**
+     * Undocumented function
+     *
+     * @param array|Redis $config array, or a Redis instance https://github.com/phpredis/phpredis#class-redis
+     * The config array may have the following keys:
+     *  'host': string. can be a host, or the path to a unix domain socket.
+     *  'port': int, optional. Default is 6379
+     *  'timeout': float, value in seconds (optional, default is 0 meaning unlimited)
+     *  'retry_interval': int, value in milliseconds (optional)
+     *  'read_timeout': float, value in seconds (optional, default is 0 meaning unlimited)
+     */
+    public function __construct($config)
     {
-        $this->client = $client;
+        if(is_array($config)){
+            $this->config = $config;
+        } else {
+            $this->client = $config;
+        }
+
         $this->scripts = [];
     }
 
@@ -97,6 +114,7 @@ class Client
 
     public function exec(Pipeline $pipeline)
     {
+        $this->checkClient();
         $commands = $pipeline->getCommands();
         //to-do: check if the pipeline has unloaded scripts
         /*if($pipeline->hasScriptCalls()){
@@ -158,6 +176,7 @@ class Client
 
     public function __call($name, $args)
     {
+        $this->checkClient();
         $error = null;
 
         if(array_key_exists($name, $this->scripts)){
@@ -193,5 +212,20 @@ class Client
         }
 
         return $result;
+    }
+
+    protected function checkClient()
+    {
+        if(!$this->client && is_array($this->config)){
+            $this->client = new Redis();
+            $cfg = $this->config;
+            $this->client->connect(
+                $cfg['host'],
+                (int) ($cfg['port'] ?? 6379),
+                (float) ($cfg['timeout'] ?? 0),
+                NULL,
+                (int) ($cfg['retry_interval'] ?? 0)
+            );
+        }
     }
 }
