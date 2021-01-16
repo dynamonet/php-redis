@@ -59,6 +59,9 @@ class Client
         $this->scripts[$scriptAlias] = $script;
 
         if($loadNowIfNotExists === true){
+
+            $this->checkClient();
+            
             $exists = (
                 ($sha1 = $script->getSha1()) !== null &&
                 ($reply = $this->client->script('exists', $sha1)) &&
