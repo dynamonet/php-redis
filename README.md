@@ -60,7 +60,7 @@ $result = $redis->pipeline()
     ->set('key1', 'value1')
     ->incr('key2')
     ->get('key2')
-    myluacmd('blablabla', 2)
+    ->myluacmd('blablabla', 2)
     ->exec();
 ```
 
