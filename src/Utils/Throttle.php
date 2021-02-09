@@ -95,21 +95,27 @@ class Throttle
     }
 
     /**
-     * Consumes the requested tokens
+     * Undocumented function
+     *
+     * @param boolean $sleep Sleep for every granted token.
+     *     If FALSE, sleep only for the first token.
+     * @return \Generator
      */
-    public function consume()
+    public function consume(bool $sleep = true)
     {
         foreach($this->itemsToConsume as $index => $item){
-            $timestamp = $this->requested + (
-                $index === 0 ?
-                $this->firstWait :
-                $this->firstWait + ( $this->interWait * $index )
-            );
-
-            $sleep = $timestamp - microtime(true);
-
-            if($sleep > 0){
-                usleep($sleep * 1000000);
+            if($index === 0 || $sleep){
+                $timestamp = $this->requested + (
+                    $index === 0 ?
+                    $this->firstWait :
+                    $this->firstWait + ( $this->interWait * $index )
+                );
+    
+                $sleep = $timestamp - microtime(true);
+    
+                if($sleep > 0){
+                    usleep($sleep * 1000000);
+                }
             }
 
             yield $item;
