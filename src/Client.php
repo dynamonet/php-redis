@@ -61,15 +61,22 @@ class Client
         if($loadNowIfNotExists === true){
 
             $this->checkClient();
+            $sha1 = $script->getSha1();
+            $reply = $this->client->script('exists', $sha1);
             
             $exists = (
-                ($sha1 = $script->getSha1()) !== null &&
-                ($reply = $this->client->script('exists', $sha1)) &&
+                $sha1 !== null &&
+                $reply &&
                 $reply[0] === 1
             );
 
             if(!$exists){
-                $script->setSha1($this->client->script('load', $script->getRawScript()));
+                $load_result = $this->client->script('load', $script->getRawScript());
+                if($load_result === false){
+                    $error = $this->client->getLastError();
+                    throw new \Exception("Failed to load Lua script: {$error}");
+                }
+                $script->setSha1($load_result);
             }
             $script->loaded = true;
         }
