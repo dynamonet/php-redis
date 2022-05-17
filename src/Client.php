@@ -74,7 +74,7 @@ class Client
                 $load_result = $this->client->script('load', $script->getRawScript());
                 if($load_result === false){
                     $error = $this->client->getLastError();
-                    throw new \Exception("Failed to load Lua script: {$error}");
+                    throw new \Exception("Failed to load Lua script '{$script->getAlias()}': {$error}");
                 }
                 $script->setSha1($load_result);
             }
