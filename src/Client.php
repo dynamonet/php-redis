@@ -15,6 +15,13 @@ class Client
     protected $scripts;
 
     /**
+     * User functions
+     *
+     * @var array
+     */
+    protected $functions = [];
+
+    /**
      * Undocumented function
      *
      * @param array|Redis $config array, or a Redis instance https://github.com/phpredis/phpredis#class-redis
@@ -84,9 +91,40 @@ class Client
         return true;
     }
 
+    /**
+     * Loads a functions script (only for Redis 7 and above), so that you can invoke your
+     * custom functions by name, without using 'rawCommand', 'FCALL' nor specifying the number
+     * of key arguments.
+     *
+     * @param string $path Path to the script where you define an register your Redis 7 functions
+     * @param array $registered_functions An associative array having by key the name of a
+     *              registered function, and the value of the key being the number of KEY arguments
+     * @return void
+     */
+    public function loadFunctionScript(
+        string $path,
+        array $registered_functions
+    ){
+        $this->checkClient();
+        $load_result = $this->client->rawCommand("FUNCTION", "LOAD", "REPLACE", file_get_contents($path));
+        if($load_result === false){
+            $error = $this->client->getLastError();
+            throw new \Exception("Failed to load functions script at '{$path}': {$error}");
+        }
+
+        $this->functions = array_merge($this->functions, $registered_functions);
+        
+        return true;
+    }
+
     public function isUserScript(string $scriptAlias) : bool
     {
         return array_key_exists($scriptAlias, $this->scripts);
+    }
+
+    public function isUserFunction(string $functionName) : bool
+    {
+        return array_key_exists($functionName, $this->functions);
     }
 
     /**
@@ -127,41 +165,26 @@ class Client
         $this->checkClient();
         $commands = $pipeline->getCommands();
         //to-do: check if the pipeline has unloaded scripts
-        /*if($pipeline->hasScriptCalls()){
-            $invokedScripts = $pipeline->getInvokedScriptNames();
-            foreach($invokedScripts as $scriptName){
-                if(
-                    array_key_exists($scriptName, $this->scripts) &&
-                    !$this->scripts[$scriptName]->loaded
-                ){
-                    $script = $this->scripts[$scriptName];
-                    if(!isset($script->raw_script)){
-                        $script->raw_script = file_get_contents($scriptParams->filepath);
-                    }
-                    $script->sha1 = $this->client->script('load', $script->raw_script);
-                if($scriptParams->sha1){
-                    $scriptParams->loaded = true;
-                }
-                }
-            }
-        }*/
 
         if(count($commands) > 1){
-            $transaction = $this->client->multi(\Redis::PIPELINE);
+            $batch = $this->client->multi(\Redis::PIPELINE);
             foreach($commands as $command){
-                if(array_key_exists($command->name, $this->scripts)){
+                if($this->isUserFunction($command->name)){
+                    $keycount = $this->functions[$command->name];
+                    $batch->rawCommand('FCALL', $command->name, $keycount, ...$command->args);
+                } else if(array_key_exists($command->name, $this->scripts)){
                     // is user script
                     $script = $this->scripts[$command->name];
-                    $transaction->evalSha(
+                    $batch->evalSha(
                         $script->getSha1(),
                         $command->args,
                         $script->getNumKeys()
                     );
                 } else {
-                    $transaction->{$command->name}(...$command->args);
+                    $batch->{$command->name}(...$command->args);
                 }
             }
-            $result = $transaction->exec();
+            $result = $batch->exec();
         } else if(count($commands) === 1){
             //no pipeline. Invoke the command as a single command, but return the result inside an array reply
             $command = $commands[0];
@@ -189,7 +212,10 @@ class Client
         $this->checkClient();
         $error = null;
 
-        if(array_key_exists($name, $this->scripts)){
+        if($this->isUserFunction($name)){
+            $keycount = $this->functions[$name];
+            $result = $this->client->rawCommand('FCALL', $name, $keycount, ...$args);
+        } else if(array_key_exists($name, $this->scripts)){
             $script = $this->scripts[$name];
             $result = $this->client->evalSha(
                 $script->getSha1(),
