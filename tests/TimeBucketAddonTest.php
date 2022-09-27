@@ -47,6 +47,11 @@ final class TimeBucketAddonTest extends TestCase
 
         $this->assertIsString($result);
         $this->assertGreaterThan(24, $floatval);
+
+        // test with non-existing samples
+        $result = $client->tbavg("bucket", 10);
+        $floatval = floatval($result);
+        $this->assertGreaterThan(0, $floatval);
     }
 
     public function testBatching()

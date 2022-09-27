@@ -14,8 +14,8 @@ final class GPipelineTest extends TestCase
         if(!$this->client){
             $redis = new \Redis();
             $redis->connect(
-                getenv('REDIS_HOST') ?: 'host.docker.internal',
-                (int) (getenv('REDIS_PORT') ?: '26379')
+                getenv('REDIS_HOST') ?: 'redis',
+                (int) (getenv('REDIS_PORT') ?: '6379')
             );
             $this->client = new Client($redis);
         }

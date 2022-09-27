@@ -39,7 +39,7 @@ local function tbavg(keys, args)
     local totalsum = 0
     
     for _, val in ipairs(samplevalues) do
-        totalsum = totalsum + val
+        totalsum = totalsum + (val or 0)
     end
 
     local avg = tostring(totalsum / #samplevalues)
