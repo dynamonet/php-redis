@@ -2,6 +2,7 @@
 
 namespace Dynamo\Redis;
 
+use Dynamo\Redis\Addons\Addon;
 use Redis;
 
 /**
@@ -11,8 +12,18 @@ use Redis;
 class Client
 {
     protected $config;
+
+    /**
+     * \Redis
+     */
     protected $client;
+
     protected $scripts;
+
+    /**
+     * @var \Dynamo\Redis\Addons\Addon[]
+     */
+    protected $addons = [];
 
     /**
      * User functions
@@ -41,6 +52,14 @@ class Client
         }
 
         $this->scripts = [];
+    }
+
+    public function addon(Addon $addon)
+    {
+        $key = get_class($addon);
+        if(!array_key_exists($key, $this->addons)){
+            $this->addons[$key] = $addon;
+        }
     }
 
     /**
@@ -237,6 +256,8 @@ class Client
             } else {
                 $script->loaded = true;
             }
+        } else if(($addon = $this->isAddonCommand($name)) !== null){
+            $addon->exec($name, $args, $this);
         } else {
             $result = $this->client->$name(...$args);
             $error = $this->client->getLastError();
@@ -262,6 +283,21 @@ class Client
                 NULL,
                 (int) ($cfg['retry_interval'] ?? 0)
             );
+
+            foreach($this->addons as $addon){
+                $addon->afterConnect($this);
+            }
         }
+    }
+
+    public function isAddonCommand(string $name) : ?Addon
+    {
+        foreach($this->addons as $addon){
+            if($addon->hasCommand($name)){
+                return $addon;
+            }
+        }
+
+        return null;
     }
 }

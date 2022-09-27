@@ -28,14 +28,22 @@ class Pipeline implements \Countable
 
     public function __call($name, $args) : self
     {
-        if($this->client->isUserScript($name) && !in_array($name, $this->scriptCalls)){
-            $this->scriptCalls[] = $name;
+        $done = false;
+        
+        if(($addon = $this->client->isAddonCommand($name)) !== null){
+            $done = $addon->batchCommand($name, $args, $this);
         }
-
-        $this->pipeline[] = (object) [
-            'name' => $name,
-            'args' => $args,
-        ];
+        
+        if(!$done){
+            if($this->client->isUserScript($name) && !in_array($name, $this->scriptCalls)){
+                $this->scriptCalls[] = $name;
+            }
+    
+            $this->pipeline[] = (object) [
+                'name' => $name,
+                'args' => $args,
+            ];
+        }
 
         return $this;
     }
