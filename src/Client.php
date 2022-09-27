@@ -122,13 +122,16 @@ class Client
      */
     public function loadFunctionScript(
         string $path,
-        array $registered_functions
+        array $registered_functions,
+        bool $load_now = true
     ){
         $this->checkClient();
-        $load_result = $this->client->rawCommand("FUNCTION", "LOAD", "REPLACE", file_get_contents($path));
-        if($load_result === false){
-            $error = $this->client->getLastError();
-            throw new \Exception("Failed to load functions script at '{$path}': {$error}");
+        if($load_now){
+            $load_result = $this->client->rawCommand("FUNCTION", "LOAD", "REPLACE", file_get_contents($path));
+            if($load_result === false){
+                $error = $this->client->getLastError();
+                throw new \Exception("Failed to load functions script at '{$path}': {$error}");
+            }
         }
 
         $this->functions = array_merge($this->functions, $registered_functions);

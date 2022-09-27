@@ -8,11 +8,22 @@ use Dynamo\Redis\Pipeline;
 
 class TimeBucketAddon extends Addon {
 
+    protected $options;
+
+    public function __construct(array $options = [])
+    {
+        $this->options = $options;
+    }
+
     public function afterConnect(Client $client){
-        $result = $client->loadFunctionScript(__DIR__.'/tblib.lua', [
-            'tbadd' => 2,
-            'tbavg' => 2,
-        ]);
+        $result = $client->loadFunctionScript(
+            __DIR__.'/tblib.lua',
+            [
+                'tbadd' => 2,
+                'tbavg' => 2,
+            ],
+            $this->options['loadAfterConnect'] ?? true
+        );
     }
 
     public function hasCommand(string $cmd) : bool
@@ -42,7 +53,7 @@ class TimeBucketAddon extends Addon {
                 return true;
             }
         }
-        
+
         return false;
     }
 

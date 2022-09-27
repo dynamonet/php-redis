@@ -16,7 +16,9 @@ final class TimeBucketAddonTest extends TestCase
             self::$client = new Client([
                 'host' => 'redis',
             ]);
-            self::$client->addon(new TimeBucketAddon());
+            self::$client->addon(new TimeBucketAddon([
+                //'loadAfterConnect' => false
+            ]));
         }
 
         return self::$client;
